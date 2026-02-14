@@ -40,6 +40,8 @@ LPCWSTR szMsgPortExists = L"A port with this name already exists.";
 LPCWSTR szMsgNoConfigOnRemoteSvr = L"Unable to configure a port on a remote server.";
 LPCWSTR szMsgNoDropOnRemoteSvr = L"Unable to drop a port on a remote server.";
 LPCWSTR szMsgBadInteger = L"Insert a valid number.";
+LPCWSTR szMsgProvideHostAddress = L"Insert a valid host address or IP.";
+LPCWSTR szMsgBadTcpPort = L"Insert a valid TCP port number (1-65535).";
 #endif
 
 #elif (MFILEMONLANG == 0x0410)
@@ -49,13 +51,15 @@ LPCWSTR szMsgUserCommandLocksSpooler = L"Il comando utente sta bloccando lo spoo
 LPCWSTR szMsgInvalidPortName = L"Inserire un nome di porta valido (non sono ammessi backslash).";
 LPCWSTR szMsgBrowseFolderTitle = L"Directory di output:";
 LPCWSTR szMsgProvideFileName = L"Inserire un pattern valido.";
-LPCWSTR szMsgInvalidFileName = L"Un pattern non può contenere i seguenti caratteri: /:*?\"<>\r\n"
+LPCWSTR szMsgInvalidFileName = L"Un pattern non pu\x00f2 contenere i seguenti caratteri: /:*?\"<>\r\n"
                                L"con l'eccezione di * e ? che possono comparire in un \"campo di ricerca\"";
 LPCWSTR szMsgNoAddOnRemoteSvr = L"Impossibile aggiungere una porta su un server remoto.";
-LPCWSTR szMsgPortExists = L"Esiste già una porta con questo nome.";
+LPCWSTR szMsgPortExists = L"Esiste gi\x00e0 una porta con questo nome.";
 LPCWSTR szMsgNoConfigOnRemoteSvr = L"Impossibile configurare una porta su un server remoto.";
 LPCWSTR szMsgNoDropOnRemoteSvr = L"Impossibile eliminare una porta su un server remoto.";
 LPCWSTR szMsgBadInteger = L"Inserire un numero valido.";
+LPCWSTR szMsgProvideHostAddress = L"Inserire un indirizzo host o IP valido.";
+LPCWSTR szMsgBadTcpPort = L"Inserire un numero di porta TCP valido (1-65535).";
 #endif
 
 #endif

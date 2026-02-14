@@ -31,6 +31,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define MAX_PWBLOB ((PWLEN + 1 * sizeof(WCHAR)) + 32)
 #define MAX_PASSWORD (PWLEN + 1)
 
+//TCP printer settings
+#define MAX_HOST_ADDRESS 256
+#define DEFAULT_TCP_PORT 9100
+
 extern LPCWSTR szMonitorName;
 extern LPCWSTR szDescription;
 extern LPCWSTR szAppTitle;
@@ -48,4 +52,6 @@ extern LPCWSTR szMsgPortExists;
 extern LPCWSTR szMsgNoConfigOnRemoteSvr;
 extern LPCWSTR szMsgNoDropOnRemoteSvr;
 extern LPCWSTR szMsgBadInteger;
+extern LPCWSTR szMsgProvideHostAddress;
+extern LPCWSTR szMsgBadTcpPort;
 #endif

@@ -258,6 +258,13 @@ void CPort::Initialize()
 	m_hToken = NULL;
 	m_bRestrictedToken = FALSE;
 	m_bLogonInvalidated = TRUE;
+	// TCP
+	m_bUseTcp = FALSE;
+	*m_szHostAddress = L'\0';
+	m_dwTcpPort = DEFAULT_TCP_PORT;
+	m_sock = INVALID_SOCKET;
+	m_bTcpActive = FALSE;
+	m_bWsaInitialized = FALSE;
 }
 
 //-------------------------------------------------------------------------------------
@@ -290,6 +297,14 @@ void CPort::Initialize(LPPORTCONFIG pConfig)
 		wcscpy_s(m_szDomain, LENGTHOF(m_szDomain), L".");
 	wcscpy_s(m_szPassword, LENGTHOF(m_szPassword), pConfig->szPassword);
 
+	// TCP
+	m_bUseTcp = pConfig->bUseTcp;
+	wcscpy_s(m_szHostAddress, LENGTHOF(m_szHostAddress), pConfig->szHostAddress);
+	Trim(m_szHostAddress);
+	m_dwTcpPort = pConfig->dwTcpPort;
+	if (m_dwTcpPort == 0 || m_dwTcpPort > 65535)
+		m_dwTcpPort = DEFAULT_TCP_PORT;
+
 	g_pLog->Info(L"Initializing port %s", m_szPortName);
 	g_pLog->Info(L" Output path:         %s", m_szOutputPath);
 	g_pLog->Info(L" File pattern:        %s", pConfig->szFilePattern);
@@ -299,6 +314,12 @@ void CPort::Initialize(LPPORTCONFIG pConfig)
 	g_pLog->Info(L" Wait termination:    %s", (m_bWaitTermination ? szTrue : szFalse));
 	g_pLog->Info(L" Wait timeout:        %u", m_dwWaitTimeout);
 	g_pLog->Info(L" Use pipe:            %s", (m_bPipeData ? szTrue : szFalse));
+	g_pLog->Info(L" Use TCP:             %s", (m_bUseTcp ? szTrue : szFalse));
+	if (m_bUseTcp)
+	{
+		g_pLog->Info(L" TCP host:            %s", m_szHostAddress);
+		g_pLog->Info(L" TCP port:            %u", m_dwTcpPort);
+	}
 	if (wcschr(m_szUser, L'@') != NULL)
 		g_pLog->Info(L" Run as:              %s", m_szUser);
 	else
@@ -338,6 +359,8 @@ CPort::~CPort()
 		CloseHandle(m_hDoneEvt);
 
 	DeleteCriticalSection(&m_threadData.csBuffer);
+
+	CloseTcp();
 }
 
 //-------------------------------------------------------------------------------------
@@ -374,6 +397,103 @@ LPCWSTR CPort::UserCommandPattern() const
 		return m_pUserCommand->PatternString();
 	else
 		return CPattern::szDefaultUserCommand;
+}
+
+//-------------------------------------------------------------------------------------
+DWORD CPort::ConnectTcp()
+{
+	WSADATA wsaData;
+	int iResult;
+
+	if (!m_bWsaInitialized)
+	{
+		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (iResult != 0)
+		{
+			g_pLog->Critical(this, L"CPort::ConnectTcp: WSAStartup failed (%i)", iResult);
+			return ERROR_CAN_NOT_COMPLETE;
+		}
+		m_bWsaInitialized = TRUE;
+	}
+
+	// Convert wide-char host address to narrow string
+	char szHostA[256] = { 0 };
+	WideCharToMultiByte(CP_ACP, 0, m_szHostAddress, -1, szHostA, sizeof(szHostA), NULL, NULL);
+
+	// Convert port number to narrow string
+	char szPortA[16] = { 0 };
+	_snprintf_s(szPortA, sizeof(szPortA), _TRUNCATE, "%u", m_dwTcpPort);
+
+	// Resolve address
+	struct addrinfo hints = { 0 };
+	struct addrinfo* result = NULL;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	iResult = getaddrinfo(szHostA, szPortA, &hints, &result);
+	if (iResult != 0)
+	{
+		g_pLog->Critical(this, L"CPort::ConnectTcp: getaddrinfo failed (%i) for host %s:%u",
+			iResult, m_szHostAddress, m_dwTcpPort);
+		return ERROR_CAN_NOT_COMPLETE;
+	}
+
+	// Try each address until we successfully connect
+	m_sock = INVALID_SOCKET;
+	for (struct addrinfo* ptr = result; ptr != NULL; ptr = ptr->ai_next)
+	{
+		m_sock = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+		if (m_sock == INVALID_SOCKET)
+		{
+			g_pLog->Error(this, L"CPort::ConnectTcp: socket() failed (%i)", WSAGetLastError());
+			continue;
+		}
+
+		iResult = connect(m_sock, ptr->ai_addr, static_cast<int>(ptr->ai_addrlen));
+		if (iResult == SOCKET_ERROR)
+		{
+			g_pLog->Error(this, L"CPort::ConnectTcp: connect() failed (%i)", WSAGetLastError());
+			closesocket(m_sock);
+			m_sock = INVALID_SOCKET;
+			continue;
+		}
+
+		// Connected successfully
+		break;
+	}
+
+	freeaddrinfo(result);
+
+	if (m_sock == INVALID_SOCKET)
+	{
+		g_pLog->Critical(this, L"CPort::ConnectTcp: unable to connect to %s:%u",
+			m_szHostAddress, m_dwTcpPort);
+		return ERROR_CAN_NOT_COMPLETE;
+	}
+
+	m_bTcpActive = TRUE;
+	g_pLog->Info(this, L"CPort::ConnectTcp: connected to %s:%u", m_szHostAddress, m_dwTcpPort);
+
+	return ERROR_SUCCESS;
+}
+
+//-------------------------------------------------------------------------------------
+void CPort::CloseTcp()
+{
+	if (m_sock != INVALID_SOCKET)
+	{
+		shutdown(m_sock, SD_SEND);
+		closesocket(m_sock);
+		m_sock = INVALID_SOCKET;
+	}
+	m_bTcpActive = FALSE;
+
+	if (m_bWsaInitialized)
+	{
+		WSACleanup();
+		m_bWsaInitialized = FALSE;
+	}
 }
 
 //-------------------------------------------------------------------------------------
@@ -493,6 +613,12 @@ DWORD CPort::CreateOutputFile()
 
 	if (!m_pPattern)
 		return ERROR_CAN_NOT_COMPLETE;
+
+	// TCP mode: connect to remote printer via socket
+	if (m_bUseTcp)
+	{
+		return ConnectTcp();
+	}
 
 	/*start composing the output filename*/
 	wcscpy_s(m_szFileName, LENGTHOF(m_szFileName), m_szOutputPath);
@@ -695,6 +821,33 @@ cleanup:
 //-------------------------------------------------------------------------------------
 BOOL CPort::WriteToFile(LPCVOID lpBuffer, DWORD cbBuffer, LPDWORD pcbWritten)
 {
+	// TCP mode: send data through socket
+	if (m_bUseTcp && m_bTcpActive)
+	{
+		const char* pBuf = static_cast<const char*>(lpBuffer);
+		DWORD cbRemaining = cbBuffer;
+		DWORD cbTotalSent = 0;
+
+		while (cbRemaining > 0)
+		{
+			int nSent = send(m_sock, pBuf + cbTotalSent, static_cast<int>(cbRemaining), 0);
+			if (nSent == SOCKET_ERROR)
+			{
+				g_pLog->Error(this, L"CPort::WriteToFile: send() failed (%i)", WSAGetLastError());
+				m_bTcpActive = FALSE;
+				SetLastError(ERROR_CAN_NOT_COMPLETE);
+				return FALSE;
+			}
+			cbTotalSent += nSent;
+			cbRemaining -= nSent;
+		}
+
+		if (pcbWritten)
+			*pcbWritten = cbTotalSent;
+
+		return TRUE;
+	}
+
 	//if we're writing to a pipe, make sure proces is alive
 	if (m_bPipeActive)
 	{
@@ -804,6 +957,22 @@ BOOL CPort::EndJob()
 
 	if (!m_pPattern)
 		return FALSE;
+
+	// TCP mode: close socket
+	if (m_bUseTcp)
+	{
+		CloseTcp();
+
+		//tell the spooler we are done with the job
+		CPrinterHandle printer(m_szPrinterName);
+
+		if (printer.Handle())
+			SetJobW(printer, JobId(), 0, NULL, JOB_CONTROL_DELETE);
+
+		g_pLog->Info(this, L"CPort::EndJob: TCP job completed");
+
+		return TRUE;
+	}
 
 	//done with the file, close it and flush buffers
 	FlushFileBuffers(m_hFile);
@@ -1037,6 +1206,10 @@ DWORD CPort::RecursiveCreateFolder(LPCWSTR szPath)
 //-------------------------------------------------------------------------------------
 DWORD CPort::CreateOutputPath()
 {
+	// TCP mode doesn't need an output path
+	if (m_bUseTcp)
+		return ERROR_SUCCESS;
+
 	if (m_hToken)
 	{
 		if (!ImpersonateLoggedOnUser(m_hToken))

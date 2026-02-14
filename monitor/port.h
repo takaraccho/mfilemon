@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #pragma once
 
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 #include <LMCons.h>
 #include "pattern.h"
 #include "..\common\config.h"
@@ -70,6 +72,9 @@ public:
 	LPCWSTR User() const { return m_szUser; }
 	LPCWSTR Domain() const { return m_szDomain; }
 	LPCWSTR Password() const { return m_szPassword; }
+	BOOL UseTcp() const { return m_bUseTcp; }
+	LPCWSTR HostAddress() const { return m_szHostAddress; }
+	DWORD TcpPort() const { return m_dwTcpPort; }
 
 private:
 	typedef struct tagTHREADDATA
@@ -84,6 +89,8 @@ private:
 	static DWORD WINAPI WriteThreadProc(LPVOID lpParam);
 	static DWORD WINAPI ReadThreadProc(LPVOID lpParam);
 	DWORD RecursiveCreateFolder(LPCWSTR szPath);
+	DWORD ConnectTcp();
+	void CloseTcp();
 
 private:
 	THREADDATA m_threadData;
@@ -119,4 +126,11 @@ private:
 	HANDLE m_hToken;
 	BOOL m_bRestrictedToken;
 	BOOL m_bLogonInvalidated;
+	// TCP socket members
+	BOOL m_bUseTcp;
+	WCHAR m_szHostAddress[MAX_HOST_ADDRESS];
+	DWORD m_dwTcpPort;
+	SOCKET m_sock;
+	BOOL m_bTcpActive;
+	BOOL m_bWsaInitialized;
 };

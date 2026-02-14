@@ -40,4 +40,7 @@ typedef struct tagPORTCONFIG
 	WCHAR szUser[MAX_USER];
 	WCHAR szDomain[MAX_DOMAIN];
 	WCHAR szPassword[MAX_PASSWORD];
+	BOOL bUseTcp;
+	WCHAR szHostAddress[MAX_HOST_ADDRESS];
+	DWORD dwTcpPort;
 } PORTCONFIG, *LPPORTCONFIG;
