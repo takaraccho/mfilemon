@@ -41,6 +41,9 @@ LPCWSTR CPortList::szUserKey = L"User";
 LPCWSTR CPortList::szDomainKey = L"Domain";
 LPCWSTR CPortList::szPasswordKey = L"Password";
 LPCWSTR CPortList::szHideProcessKey = L"HideProcess";
+LPCWSTR CPortList::szUseTcpKey = L"UseTcp";
+LPCWSTR CPortList::szHostAddressKey = L"HostAddress";
+LPCWSTR CPortList::szTcpPortKey = L"TcpPort";
 
 static BYTE aeskey[] = {
 	0x73, 0xb6, 0x45, 0x0c, 0x24, 0xc9, 0xfe, 0x6b, 0x74, 0xf8, 0xc2, 0xbe, 0x94, 0xd4, 0xdf, 0xd4,
@@ -448,7 +451,7 @@ void CPortList::LoadFromRegistry()
 				EVP_DecryptInit(ctx, EVP_aes_256_cbc(), aeskey, iv) &&
 				EVP_DecryptUpdate(ctx, reinterpret_cast<LPBYTE>(pConfig->szPassword), &outlen1, pwData, cbData - 16) &&
 				EVP_DecryptFinal(ctx, reinterpret_cast<LPBYTE>(pConfig->szPassword + outlen1), &outlen2) &&
-				EVP_CIPHER_CTX_cleanup(ctx))
+				EVP_CIPHER_CTX_reset(ctx))
 			{
 				int len = (static_cast<unsigned long long>(outlen1) + outlen2) / sizeof(WCHAR);
 
@@ -465,6 +468,26 @@ void CPortList::LoadFromRegistry()
 			if (ctx)
 				EVP_CIPHER_CTX_free(ctx);
 		}
+
+		//read UseTcp
+		cbData = sizeof(pConfig->bUseTcp);
+		if (pReg->fpQueryValue(hKey, szUseTcpKey, NULL, reinterpret_cast<LPBYTE>(&pConfig->bUseTcp),
+			&cbData, g_pMonitorInit->hSpooler) != ERROR_SUCCESS)
+			pConfig->bUseTcp = FALSE;
+
+		//read HostAddress
+		cbData = sizeof(pConfig->szHostAddress);
+		if (pReg->fpQueryValue(hKey, szHostAddressKey, NULL, reinterpret_cast<LPBYTE>(pConfig->szHostAddress),
+			&cbData, g_pMonitorInit->hSpooler) != ERROR_SUCCESS)
+			*pConfig->szHostAddress = L'\0';
+		else
+			pConfig->szHostAddress[cbData / sizeof(WCHAR)] = L'\0';
+
+		//read TcpPort
+		cbData = sizeof(pConfig->dwTcpPort);
+		if (pReg->fpQueryValue(hKey, szTcpPortKey, NULL, reinterpret_cast<LPBYTE>(&pConfig->dwTcpPort),
+			&cbData, g_pMonitorInit->hSpooler) != ERROR_SUCCESS)
+			pConfig->dwTcpPort = DEFAULT_TCP_PORT;
 
 		//close registry
 		pReg->fpCloseKey(hKey, g_pMonitorInit->hSpooler);
@@ -593,7 +616,7 @@ void CPortList::SaveToRegistry()
 				EVP_EncryptInit(ctx, EVP_aes_256_cbc(), aeskey, iv) &&
 				EVP_EncryptUpdate(ctx, pData, &outlen1, reinterpret_cast<LPBYTE>(szBuf), len) &&
 				EVP_EncryptFinal(ctx, pData + outlen1, &outlen2) &&
-				EVP_CIPHER_CTX_cleanup(ctx))
+				EVP_CIPHER_CTX_reset(ctx))
 			{
 				int len1 = 16 + outlen1 + outlen2;
 
@@ -605,6 +628,22 @@ void CPortList::SaveToRegistry()
 
 			if (ctx)
 				EVP_CIPHER_CTX_free(ctx);
+
+			//UseTcp
+			BOOL bUseTcp = pPortRec->m_pPort->UseTcp();
+			pReg->fpSetValue(hKey, szUseTcpKey, REG_DWORD, reinterpret_cast<LPBYTE>(&bUseTcp),
+				sizeof(bUseTcp), g_pMonitorInit->hSpooler);
+
+			//HostAddress
+			szBuf = _wcsdup(pPortRec->m_pPort->HostAddress());
+			pReg->fpSetValue(hKey, szHostAddressKey, REG_SZ, reinterpret_cast<LPBYTE>(szBuf),
+				static_cast<DWORD>(wcslen(szBuf) * sizeof(WCHAR)), g_pMonitorInit->hSpooler);
+			free(szBuf);
+
+			//TcpPort
+			DWORD dwTcpPort = pPortRec->m_pPort->TcpPort();
+			pReg->fpSetValue(hKey, szTcpPortKey, REG_DWORD, reinterpret_cast<LPBYTE>(&dwTcpPort),
+				sizeof(dwTcpPort), g_pMonitorInit->hSpooler);
 
 			//close registry
 			pReg->fpCloseKey(hKey, g_pMonitorInit->hSpooler);

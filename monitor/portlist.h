@@ -55,6 +55,9 @@ private:
 	static LPCWSTR szDomainKey;
 	static LPCWSTR szPasswordKey;
 	static LPCWSTR szHideProcessKey;
+	static LPCWSTR szUseTcpKey;
+	static LPCWSTR szHostAddressKey;
+	static LPCWSTR szTcpPortKey;
 	LPPORTREC m_pFirstPortRec;
 	WCHAR m_szMonitorName[MAX_PATH + 1];
 	WCHAR m_szPortDesc[MAX_PATH + 1];

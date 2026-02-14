@@ -20,5 +20,8 @@
 #define szDomain "Domain (ignored if using user@dns.domain.name)"
 #define szPassword "Password"
 #define szHideProcess "Hide process"
+#define szUseTcp "Send data to TCP printer (RAW/JetDirect)"
+#define szHostAddress "Host address or IP"
+#define szTcpPort "TCP port"
 
 #endif

@@ -389,6 +389,9 @@ DWORD WINAPI MfmXcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
 			wcscpy_s(ppc->szUser, LENGTHOF(ppc->szUser), pXCVDATA->pPort->User());
 			wcscpy_s(ppc->szDomain, LENGTHOF(ppc->szDomain), pXCVDATA->pPort->Domain());
 			wcscpy_s(ppc->szPassword, LENGTHOF(ppc->szPassword), pXCVDATA->pPort->Password());
+			ppc->bUseTcp = pXCVDATA->pPort->UseTcp();
+			wcscpy_s(ppc->szHostAddress, LENGTHOF(ppc->szHostAddress), pXCVDATA->pPort->HostAddress());
+			ppc->dwTcpPort = pXCVDATA->pPort->TcpPort();
 			g_pLog->Debug(L"MfmXcvDataPort returning ERROR_SUCCESS");
 			return ERROR_SUCCESS;
 		}

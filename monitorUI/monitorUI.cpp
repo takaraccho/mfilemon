@@ -311,6 +311,13 @@ static BOOL CALLBACK MonitorUIDlgProc(HWND hDlg, UINT uMessage, WPARAM wParam, L
 		hControl = GetDlgItem(hDlg, ID_EDTDOMAIN);
 		SendMessage(hControl, EM_SETLIMITTEXT, DNLEN, 0);
 		bPasswordChanged = FALSE;
+		//TCP settings
+		hWnd = GetDlgItem(hDlg, ID_CHKUSETCP);
+		if (hWnd)
+			SendMessageW(hWnd, BM_SETCHECK, ppc->bUseTcp ? BST_CHECKED : BST_UNCHECKED, 0);
+		SetDlgItemTextW(hDlg, ID_EDTHOSTADDRESS, ppc->szHostAddress);
+		swprintf_s(buf, LENGTHOF(buf), L"%u", ppc->dwTcpPort);
+		SetDlgItemTextW(hDlg, ID_EDTTCPPORT, buf);
 		return TRUE;
 	case WM_COMMAND:
 		_ASSERTE(ppc != NULL);
@@ -426,6 +433,51 @@ static BOOL CALLBACK MonitorUIDlgProc(HWND hDlg, UINT uMessage, WPARAM wParam, L
 				TrimControlText(hDlg, ID_EDTDOMAIN, ppc->szDomain, LENGTHOF(ppc->szDomain));
 				if (bPasswordChanged)
 					GetDlgItemTextW(hDlg, ID_EDTPASSWORD, ppc->szPassword, LENGTHOF(ppc->szPassword));
+
+				//TCP settings
+				hWnd = GetDlgItem(hDlg, ID_CHKUSETCP);
+				if (hWnd)
+				{
+					switch (SendMessageW(hWnd, BM_GETCHECK, 0, 0))
+					{
+					case BST_CHECKED:
+						ppc->bUseTcp = TRUE;
+						break;
+					case BST_UNCHECKED:
+						ppc->bUseTcp = FALSE;
+						break;
+					default:
+						_ASSERTE(FALSE);
+						ppc->bUseTcp = FALSE;
+						break;
+					}
+				}
+				TrimControlText(hDlg, ID_EDTHOSTADDRESS, ppc->szHostAddress, LENGTHOF(ppc->szHostAddress));
+				{
+					WCHAR tcpBuf[16];
+					TrimControlText(hDlg, ID_EDTTCPPORT, tcpBuf, LENGTHOF(tcpBuf));
+					WCHAR* tcpEndptr;
+					ULONG tcpPortVal = wcstoul(tcpBuf, &tcpEndptr, 10);
+					if (tcpEndptr == tcpBuf || *tcpEndptr || tcpPortVal == 0 || tcpPortVal > 65535)
+					{
+						if (ppc->bUseTcp)
+						{
+							MessageBoxW(hDlg, szMsgBadTcpPort, szAppTitle, MB_OK);
+							SetFocus(GetDlgItem(hDlg, ID_EDTTCPPORT));
+							return TRUE;
+						}
+						else
+							tcpPortVal = DEFAULT_TCP_PORT;
+					}
+					ppc->dwTcpPort = static_cast<DWORD>(tcpPortVal);
+				}
+				//Validate TCP host when TCP mode is enabled
+				if (ppc->bUseTcp && *ppc->szHostAddress == L'\0')
+				{
+					MessageBoxW(hDlg, szMsgProvideHostAddress, szAppTitle, MB_OK);
+					SetFocus(GetDlgItem(hDlg, ID_EDTHOSTADDRESS));
+					return TRUE;
+				}
 
 				//check percorso di output
 				/*
