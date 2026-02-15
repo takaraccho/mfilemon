@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <winspool.h>
 #include <winsplp.h>
+#include <stdio.h>
 #include <crtdbg.h>
 
 #define LENGTHOF(x) (sizeof(x)/sizeof((x)[0]))
