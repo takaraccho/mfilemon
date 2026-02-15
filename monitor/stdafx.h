@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "..\common\sec_api.h"
 #endif
 
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 #include <windows.h>
 #include <wchar.h>
 #include <string.h>

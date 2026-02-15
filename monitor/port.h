@@ -19,8 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #pragma once
 
-#include <WinSock2.h>
-#include <WS2tcpip.h>
 #include <LMCons.h>
 #include "pattern.h"
 #include "..\common\config.h"
