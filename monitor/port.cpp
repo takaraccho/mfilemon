@@ -422,7 +422,7 @@ DWORD CPort::ConnectTcp()
 
 	// Convert port number to narrow string
 	char szPortA[16] = { 0 };
-	_snprintf_s(szPortA, sizeof(szPortA), _TRUNCATE, "%u", m_dwTcpPort);
+	sprintf_s(szPortA, sizeof(szPortA), "%u", m_dwTcpPort);
 
 	// Resolve address
 	struct addrinfo hints = { 0 };
