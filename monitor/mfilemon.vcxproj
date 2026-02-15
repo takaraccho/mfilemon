@@ -141,6 +141,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winspool.lib;advapi32.lib;user32.lib;libcrypto32MTd.lib;crypt32.lib;ws2_32.lib;wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -164,6 +165,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winspool.lib;advapi32.lib;user32.lib;libcrypto64MTd.lib;crypt32.lib;ws2_32.lib;wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -187,6 +189,7 @@
       <ConformanceMode>true</ConformanceMode>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;MFILEMONLANG=0x409;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -220,6 +223,7 @@
       <ConformanceMode>true</ConformanceMode>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;MFILEMONLANG=0x409;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -250,6 +254,7 @@
       <ConformanceMode>true</ConformanceMode>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;MFILEMONLANG=0x410;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -283,6 +288,7 @@
       <ConformanceMode>true</ConformanceMode>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;MFILEMONLANG=0x410;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -325,6 +331,7 @@
       </PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -333,6 +340,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release-ita|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
